@@ -56,6 +56,7 @@ export default defineConfig({
       },
       input: {
         "js/config" : resolve(__dirname,"assets/js/config.js"),
+        "js/hintpoint" : resolve(__dirname,"assets/js/hintpoint.js"),
       }
     }
   },

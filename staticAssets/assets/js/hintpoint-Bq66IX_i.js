@@ -1,0 +1,1 @@
+import{$ as e}from"../jquery-D6y97aCn.js";window.Alpine.data("Hintpoints",()=>({challengevalue:"",async hintpointvalue(a){const n=`/api/hintpoint/challengevalue/${a}`,t=await e.get(n);this.challengevalue=t.data}}));window.Alpine.start();

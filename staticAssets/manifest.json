@@ -3,10 +3,26 @@
     "file": "assets/echarts-l0sNRNKZ.js",
     "name": "echarts"
   },
+  "_jquery-D6y97aCn.js": {
+    "file": "assets/jquery-D6y97aCn.js",
+    "name": "jquery"
+  },
   "assets/js/config.js": {
-    "file": "assets/js/config-B-H-8TsH.js",
+    "file": "assets/js/config-iNCtBTcr.js",
     "name": "js/config",
     "src": "assets/js/config.js",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_jquery-D6y97aCn.js"
+    ]
+  },
+  "assets/js/hintpoint.js": {
+    "file": "assets/js/hintpoint-DC_WRxR3.js",
+    "name": "js/hintpoint",
+    "src": "assets/js/hintpoint.js",
+    "isEntry": true,
+    "imports": [
+      "_jquery-D6y97aCn.js"
+    ]
   }
 }
