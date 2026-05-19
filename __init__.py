@@ -82,7 +82,7 @@ def load(app):
         
         # replace costly hint with non cost hint if not solved
 
-        if(req["type"] == "hints" and not isSolved(target.challenge_id)):
+        if(req["type"] == "hints" and not isSolved(target.challenge_id) and get_config("hintpointdelay")):
             hint = target
             name = hint.name
             description = hint.description
@@ -128,6 +128,7 @@ def load(app):
                 request_data = request.get_json()
 
             challenge_id = request_data.get("challenge_id")
-            apply_delayed_hints(challenge_id)
+            if get_config("hintpointdelay"):
+                apply_delayed_hints(challenge_id)
 
     run_after_route(app,'api.challenges_challenge_attempt',modify_challenge_correct)
