@@ -9,15 +9,19 @@ window.Alpine.data("Hintpoints",()=>({
         const res = await $.get(url);
         this.challengevalue = res.data;
         this.idx = id;
+    },
+    refreshValue() {
+        if (this.idx) {
+            this.hintpointvalue(this.idx);
+        }
+    },
+    init() {
+        // Listen for refresh events from other components
+        window.addEventListener('refreshAllHints', () => {
+            this.refreshValue();
+        });
     }
 }))
-
-//challenge view
-const observer = new MutationObserver(callback);
-const woppy = $("#challenge-window")[0];
-if (woppy) {
-    observer.observe(woppy,{attributes: true});
-}
 
 
 window.Alpine.start()
