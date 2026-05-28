@@ -4,7 +4,7 @@
 from flask import Blueprint, render_template, request
 
 from CTFd.cache import clear_standings
-from CTFd.models import Challenges, db, get_class_by_tablename
+from CTFd.models import Challenges, Unlocks, db, get_class_by_tablename
 from CTFd.plugins.hintpointdelay.utils import (
     DelayedHints,
     apply_delayed_hints,
@@ -12,8 +12,14 @@ from CTFd.plugins.hintpointdelay.utils import (
     isSolved,
     registerTemplate,
 )
-from CTFd.plugins.LuaUtils import ConfigPanel, _LuaAsset, run_after_route
+from CTFd.plugins.LuaUtils import (
+    ConfigPanel,
+    _LuaAsset,
+    run_after_route,
+    run_before_route,
+)
 from CTFd.schemas.awards import AwardSchema
+from CTFd.schemas.unlocks import UnlockSchema
 from CTFd.utils import get_config
 from CTFd.utils.decorators import admins_only
 from CTFd.utils.user import get_current_user
@@ -68,13 +74,83 @@ def load(app):
         res = get_modified_challenge_points(challenge_id,challenge.value)
         return {"success": True, "data":res}
 
+
+    def remove_point_test():
+        req = request.get_json()
+        user = get_current_user()
+
+        target_type = req["type"]
+
+        req["user_id"] = user.id
+        req["team_id"] = user.team_id
+
+        Model = get_class_by_tablename(req["type"])
+        target = Model.query.filter_by(id=req["target"]).first_or_404()
+
+        if target_type == "hints":
+            # We should use the team's score if in teams mode
+            # user.account gives the appropriate account based on team mode
+            # Use get_score with admin to get the account's full score value
+            schema = UnlockSchema()
+            response = schema.load(req, session=db.session)
+
+            if response.errors:
+                return {"success": False, "errors": response.errors}, 400
+
+            # Search for an existing unlock that matches the target and type
+            # And matches either the requesting user id or the requesting team id
+            existing = Unlocks.query.filter(
+                Unlocks.target == req["target"],
+                Unlocks.type == req["type"],
+                Unlocks.account_id == user.account_id,
+            ).first()
+            if existing:
+                return (
+                    {
+                        "success": False,
+                        "errors": {"target": "You've already unlocked this target"},
+                    },
+                    400,
+                )
+
+            db.session.add(response.data)
+
+            award_schema = AwardSchema()
+            award = {
+                "user_id": user.id,
+                "team_id": user.team_id,
+                "name": target.name,
+                "description": target.description,
+                "value": (-target.cost),
+                "category": target.category,
+            }
+
+            award = award_schema.load(award)
+            db.session.add(award.data)
+            db.session.commit()
+            clear_standings()
+
+            response = schema.dump(response.data)
+
+            return {"success": True, "data": response.data}
+        elif target_type == "solutions":
+           return
+        else:
+            return (
+                {
+                    "success": False,
+                    "errors": {"type": "Unknown target type"},
+                },
+                400,
+            )
+
+    run_before_route(app,'api.unlocks_unlock_list',remove_point_test)
+
+
     #modified award unlock
     def modify_award(res):
         req = request.get_json()
-        award_data = res[0].get_json()
-        if not award_data['success']:
-            return
-        
+
         user = get_current_user()
 
         Model = get_class_by_tablename(req["type"])
@@ -115,6 +191,8 @@ def load(app):
 
             db.session.commit()
             clear_standings()
+
+            return {"success": True, "data": res}
 
 
     run_after_route(app,'api.unlocks_unlock_list',modify_award)
